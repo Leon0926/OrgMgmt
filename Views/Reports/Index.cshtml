@@ -1,0 +1,67 @@
+@model OrgMgmt.Models.ReportsViewModel
+
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<h1>Reports</h1>
+<p class="text-muted">Both result sets are also written to the application output log.</p>
+
+<h4>Query 1 &ndash; Number of clients living in each city</h4>
+<p class="text-muted">Ordered by city name.</p>
+@if (Model.ClientsPerCity.Count == 0)
+{
+    <p><em>No clients in the system.</em></p>
+}
+else
+{
+    <table class="table table-sm w-auto">
+        <thead>
+            <tr>
+                <th>City</th>
+                <th class="text-end">Number of clients</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.ClientsPerCity)
+            {
+                <tr>
+                    <td>@row.City</td>
+                    <td class="text-end">@row.ClientCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<hr />
+
+<h4>Query 2 &ndash; Clients not yet registered for a service</h4>
+@if (Model.ClientsWithoutServices.Count == 0)
+{
+    <p><em>Every client is registered for at least one service.</em></p>
+}
+else
+{
+    <table class="table table-sm w-auto">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>City</th>
+                <th class="text-end">Balance</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var client in Model.ClientsWithoutServices)
+            {
+                <tr>
+                    <td>@client.Name</td>
+                    <td>@client.Address</td>
+                    <td class="text-end">@client.Balance.ToString("C")</td>
+                    <td><a asp-controller="Clients" asp-action="Details" asp-route-id="@client.ID">Details</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
