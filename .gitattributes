@@ -1,0 +1,14 @@
+# Normalise line endings. Without this, committing from Windows rewrites every
+# file to CRLF and the next commit from macOS rewrites them all back, which is
+# what produced the "1986 insertions, 1986 deletions" churn in this repo.
+* text=auto
+
+# Treat these as binary so git never touches their bytes.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.db   binary
+*.zip  binary
+*.pdf  binary
