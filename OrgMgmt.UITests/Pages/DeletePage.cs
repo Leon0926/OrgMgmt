@@ -1,4 +1,5 @@
 using OpenQA.Selenium;
+using OrgMgmt.UITests.Infrastructure;
 
 namespace OrgMgmt.UITests.Pages;
 
@@ -9,5 +10,9 @@ public sealed class DeletePage
 
     public DeletePage(IWebDriver driver) => _driver = driver;
 
-    public void Confirm() => _driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+    public void Confirm()
+    {
+        Slowmo.Pause();
+        _driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+    }
 }

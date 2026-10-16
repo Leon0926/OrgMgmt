@@ -1,5 +1,6 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using OrgMgmt.UITests.Infrastructure;
 
 namespace OrgMgmt.UITests.Pages;
 
@@ -38,6 +39,7 @@ public sealed class ServiceFormPage
         {
             select.SelectByText(name);
         }
+        Slowmo.Pause();
         return this;
     }
 
@@ -47,13 +49,18 @@ public sealed class ServiceFormPage
         return select.AllSelectedOptions.Select(o => o.Text).ToList();
     }
 
-    public void Submit() => _driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+    public void Submit()
+    {
+        Slowmo.Pause();
+        _driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+    }
 
     private ServiceFormPage Fill(string id, string value)
     {
         var field = _driver.FindElement(By.Id(id));
         field.Clear();
         field.SendKeys(value);
+        Slowmo.Pause();
         return this;
     }
 }

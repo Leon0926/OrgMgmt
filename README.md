@@ -36,6 +36,27 @@ ORGMGMT_UITESTS_HEADED=1 dotnet test
 against a **throwaway SQLite database** in the temp directory, so your own `app.db` is
 never touched. Each test begins by emptying that database, so row counts are predictable.
 
+### Recording a demo of the suite
+
+Headless runs show nothing on screen, and at full speed each test finishes in one to three
+seconds. For a screen recording, run headed with a slow-motion delay (milliseconds) and a
+logger that prints each test name as it passes:
+
+```bash
+ORGMGMT_UITESTS_HEADED=1 ORGMGMT_UITESTS_SLOWMO=350   dotnet test --logger "console;verbosity=detailed"
+```
+
+`ORGMGMT_UITESTS_SLOWMO` pauses after each browser interaction; it is off by default so
+normal runs stay fast. At 350 ms the full suite takes roughly six minutes. To record one
+area at a time, add a filter:
+
+```bash
+ORGMGMT_UITESTS_HEADED=1 ORGMGMT_UITESTS_SLOWMO=350   dotnet test --filter "FullyQualifiedName~ClientCrudTests"   --logger "console;verbosity=detailed"
+```
+
+Available filters: `ClientCrudTests`, `EmployeeCrudTests`, `ServiceCrudTests`,
+`PhotoUploadTests`, `DateOfBirthPickerTests`, `ServiceAssociationTests`.
+
 ## What the tests cover
 
 | Area | File |

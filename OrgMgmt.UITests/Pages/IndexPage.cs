@@ -1,4 +1,5 @@
 using OpenQA.Selenium;
+using OrgMgmt.UITests.Infrastructure;
 
 namespace OrgMgmt.UITests.Pages;
 
@@ -58,8 +59,11 @@ public sealed class IndexPage
 
     public void ClickCreateNew() => _driver.FindElement(By.LinkText("Create New")).Click();
 
-    private void ClickLink(string key, string text) =>
+    private void ClickLink(string key, string text)
+    {
+        Slowmo.Pause();
         Row(key).FindElement(By.LinkText(text)).Click();
+    }
 
     private IReadOnlyList<IWebElement> Rows(string key) =>
         _driver.FindElements(By.CssSelector($"tbody tr[{_keyAttribute}='{EscapeCss(key)}']"));
