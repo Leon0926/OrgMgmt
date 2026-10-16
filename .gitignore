@@ -489,3 +489,7 @@ app.db-wal
 
 # macOS
 .DS_Store
+
+# Course submission archives (regenerated from source)
+OrgMgmt_submission.zip
+*_submission.zip

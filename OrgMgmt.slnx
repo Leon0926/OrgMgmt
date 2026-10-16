@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="OrgMgmt.UITests/OrgMgmt.UITests.csproj" />
+  <Project Path="OrgMgmt/OrgMgmt.csproj" />
+</Solution>

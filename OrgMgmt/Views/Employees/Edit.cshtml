@@ -1,0 +1,79 @@
+@model OrgMgmt.Models.Employee
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Employee</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Salary" class="control-label"></label>
+                <input asp-for="Salary" class="form-control" />
+                <span asp-validation-for="Salary" class="text-danger"></span>
+            </div>
+            <input type="hidden" asp-for="ID" />
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Address" class="control-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DateOfBirth" class="control-label"></label>
+                <input asp-for="DateOfBirth" class="form-control" type="text"
+                       data-datepicker placeholder="yyyy-mm-dd" autocomplete="off" />
+                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Current photo</label>
+                <div>
+                    @if (Model!.HasPhoto)
+                    {
+                        <img id="currentPhoto" src="@Url.Action("Photo", new { id = Model.ID })"
+                             alt="Current photo" style="max-width:150px;max-height:150px;" />
+                    }
+                    else
+                    {
+                        <span id="noPhoto" class="text-muted">No photo</span>
+                    }
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="PhotoFile" class="control-label">Upload or replace photo</label>
+                <input asp-for="PhotoFile" type="file" accept="image/*" class="form-control" />
+                <span asp-validation-for="PhotoFile" class="text-danger"></span>
+            </div>
+            <div class="form-check">
+                <input asp-for="RemovePhoto" class="form-check-input" />
+                <label asp-for="RemovePhoto" class="form-check-label"></label>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Services</label>
+                <select id="selectedServices" name="selectedServices" class="form-control" multiple
+                        asp-items="ViewBag.ServiceList"></select>
+                <small class="form-text text-muted">Hold Ctrl (Cmd on macOS) to select more than one.</small>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
