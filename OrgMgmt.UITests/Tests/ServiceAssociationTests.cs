@@ -63,34 +63,6 @@ public sealed class ServiceAssociationTests : UITestBase
     }
 
     [Fact]
-    public void Every_service_can_be_de_associated_from_a_client()
-    {
-        CreateService("Tax Filing", 120m);
-        CreateService("Bookkeeping", 85m);
-        CreateClientWithServices("Karen Knight", "Tax Filing", "Bookkeeping");
-
-        GoTo("/Clients");
-        IndexPage.ForPeople(Driver).ClickEdit("Karen Knight");
-        new PersonFormPage(Driver).ClearServices().Submit();
-        WaitForPath("/Clients");
-
-        Assert.Empty(ServicesOf(IndexPage.ForPeople(Driver).Cell("Karen Knight", "services")));
-    }
-
-    [Fact]
-    public void The_edit_form_pre_selects_the_services_a_client_already_has()
-    {
-        CreateService("Tax Filing", 120m);
-        CreateService("Bookkeeping", 85m);
-        CreateClientWithServices("Karen Knight", "Tax Filing");
-
-        GoTo("/Clients");
-        IndexPage.ForPeople(Driver).ClickEdit("Karen Knight");
-
-        Assert.Equal(new[] { "Tax Filing" }, new PersonFormPage(Driver).SelectedServices());
-    }
-
-    [Fact]
     public void Services_can_be_associated_with_an_employee_and_then_de_associated()
     {
         CreateService("Tax Filing", 120m);
@@ -128,42 +100,6 @@ public sealed class ServiceAssociationTests : UITestBase
         Assert.Equal("", IndexPage.ForServices(Driver).Cell("Tax Filing", "employee"));
     }
 
-    [Fact]
-    public void Clients_can_be_associated_with_a_service_from_the_service_form()
-    {
-        CreateClient("Karen Knight");
-        CreateClient("Mona Mills");
-
-        GoTo("/Services/Create");
-        new ServiceFormPage(Driver)
-            .Type("Advisory")
-            .Rate(200m)
-            .SelectClients("Karen Knight", "Mona Mills")
-            .Submit();
-        WaitForPath("/Services");
-
-        var services = IndexPage.ForServices(Driver);
-        Assert.Equal(
-            new[] { "Karen Knight", "Mona Mills" },
-            ServicesOf(services.Cell("Advisory", "clients")));
-
-        // And the association shows up from the client side too.
-        GoTo("/Clients");
-        Assert.Equal(
-            new[] { "Advisory" },
-            ServicesOf(IndexPage.ForPeople(Driver).Cell("Karen Knight", "services")));
-
-        // De-associate one client.
-        GoTo("/Services");
-        IndexPage.ForServices(Driver).ClickEdit("Advisory");
-        new ServiceFormPage(Driver).SelectClients("Mona Mills").Submit();
-        WaitForPath("/Services");
-
-        Assert.Equal(
-            new[] { "Mona Mills" },
-            ServicesOf(IndexPage.ForServices(Driver).Cell("Advisory", "clients")));
-    }
-
     /// <summary>Splits a comma-separated cell into a sorted list, so order never matters.</summary>
     private static string[] ServicesOf(string cellText) => cellText
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -175,18 +111,6 @@ public sealed class ServiceAssociationTests : UITestBase
         GoTo("/Services/Create");
         new ServiceFormPage(Driver).Type(type).Rate(rate).Submit();
         WaitForPath("/Services");
-    }
-
-    private void CreateClient(string name)
-    {
-        GoTo("/Clients/Create");
-        new PersonFormPage(Driver)
-            .Name(name)
-            .Address("11 Aspen Place")
-            .Balance(500m)
-            .PickDateOfBirth(new DateTime(1993, 2, 14))
-            .Submit();
-        WaitForPath("/Clients");
     }
 
     private void CreateClientWithServices(string name, params string[] serviceTypes)

@@ -2,12 +2,15 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using Microsoft.Data.Sqlite;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
 
 namespace OrgMgmt.UITests.Infrastructure;
 
 /// <summary>
 /// Hosts the OrgMgmt web application once for the whole test run, against a throwaway
-/// SQLite database so the developer's own app.db is never touched.
+/// SQLite database so the developer's own app.db is never touched. Also owns the one Chrome
+/// instance that every test shares.
 /// </summary>
 public sealed class WebAppFixture : IAsyncLifetime
 {
@@ -16,10 +19,13 @@ public sealed class WebAppFixture : IAsyncLifetime
 
     public string BaseUrl { get; private set; } = string.Empty;
 
+    public IWebDriver Driver { get; private set; } = null!;
+
     public async Task InitializeAsync()
     {
         var solutionDir = FindSolutionDirectory();
-        var webProject = Path.Combine(solutionDir, "OrgMgmt", "OrgMgmt.csproj");
+        var webProjectDir = Path.Combine(solutionDir, "OrgMgmt");
+        var webProject = Path.Combine(webProjectDir, "OrgMgmt.csproj");
         if (!File.Exists(webProject))
         {
             throw new InvalidOperationException($"Could not find the web project at {webProject}.");
@@ -29,11 +35,19 @@ public sealed class WebAppFixture : IAsyncLifetime
         var port = GetFreePort();
         BaseUrl = $"http://127.0.0.1:{port}";
 
+        // The test project references the web project, so it is already built. Running that
+        // build directly skips the second compile that "dotnet run" would do.
+        var webDll = FindBuiltWebApp(webProjectDir);
+        var arguments = webDll != null
+            ? $"\"{webDll}\" --urls {BaseUrl}"
+            // --no-launch-profile keeps launchSettings.json from overriding the URL and environment.
+            : $"run --project \"{webProject}\" --no-launch-profile --urls {BaseUrl}";
+
         var startInfo = new ProcessStartInfo("dotnet")
         {
-            // --no-launch-profile keeps launchSettings.json from overriding the URL and environment.
-            Arguments = $"run --project \"{webProject}\" --no-launch-profile --urls {BaseUrl}",
-            WorkingDirectory = solutionDir,
+            Arguments = arguments,
+            // The project folder is the content root, so wwwroot and the views resolve.
+            WorkingDirectory = webProjectDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -49,10 +63,22 @@ public sealed class WebAppFixture : IAsyncLifetime
         _ = _app.StandardError.ReadToEndAsync();
 
         await WaitUntilRespondingAsync();
+
+        Driver = StartBrowser();
     }
 
     public Task DisposeAsync()
     {
+        try
+        {
+            Driver?.Quit();
+        }
+        catch (WebDriverException)
+        {
+            // The browser may already be gone; nothing useful to do here.
+        }
+        Driver?.Dispose();
+
         if (_app is { HasExited: false })
         {
             // dotnet run launches the app as a child process, so the whole tree must go.
@@ -121,6 +147,39 @@ public sealed class WebAppFixture : IAsyncLifetime
         }
 
         throw new TimeoutException($"The web application did not respond at {BaseUrl} within 120 seconds.");
+    }
+
+    private static IWebDriver StartBrowser()
+    {
+        var options = new ChromeOptions();
+        if (Environment.GetEnvironmentVariable("ORGMGMT_UITESTS_HEADED") != "1")
+        {
+            options.AddArgument("--headless=new");
+        }
+        options.AddArgument("--lang=en-US");
+        options.AddArgument("--window-size=1400,1000");
+        options.AddArgument("--disable-extensions");
+        options.AddUserProfilePreference("intl.accept_languages", "en-US");
+
+        return new ChromeDriver(options);
+    }
+
+    /// <summary>
+    /// The web project's build output for the same configuration and framework as this test
+    /// assembly (e.g. bin/Debug/net10.0/OrgMgmt.dll), or null if it is not there.
+    /// </summary>
+    private static string? FindBuiltWebApp(string webProjectDir)
+    {
+        var testBin = new DirectoryInfo(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
+        var framework = testBin.Name;
+        var configuration = testBin.Parent?.Name;
+        if (configuration == null)
+        {
+            return null;
+        }
+
+        var dll = Path.Combine(webProjectDir, "bin", configuration, framework, "OrgMgmt.dll");
+        return File.Exists(dll) ? dll : null;
     }
 
     /// <summary>

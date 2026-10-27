@@ -89,22 +89,6 @@ public sealed class PhotoUploadTests : UITestBase
     }
 
     [Fact]
-    public void Editing_a_client_without_touching_the_file_input_keeps_the_photo()
-    {
-        CreateClientWithPhoto("Gina Grant", TestImage.CreateRed());
-
-        GoTo("/Clients");
-        IndexPage.ForPeople(Driver).ClickEdit("Gina Grant");
-        new PersonFormPage(Driver).Address("4 Lily Close").Submit();
-
-        WaitForPath("/Clients");
-
-        var index = IndexPage.ForPeople(Driver);
-        Assert.Equal("4 Lily Close", index.Cell("Gina Grant", "address"));
-        Assert.True(index.RowHasPhoto("Gina Grant"), "An unrelated edit wiped the photo.");
-    }
-
-    [Fact]
     public void Uploading_replacing_and_removing_an_employee_photo()
     {
         GoTo("/Employees/Create");

@@ -30,12 +30,7 @@ public sealed class PersonFormPage
     {
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
 
-        _driver.FindElement(By.Id("DateOfBirth")).Click();
-        var calendar = wait.Until(d =>
-        {
-            var open = d.FindElements(By.CssSelector(".flatpickr-calendar.open")).FirstOrDefault();
-            return open is { Displayed: true } ? open : null;
-        })!;
+        var calendar = OpenDatePicker();
         Slowmo.Pause();
 
         // Year: a numeric field in the picker's header. Clear() is used rather than a
@@ -57,6 +52,8 @@ public sealed class PersonFormPage
             .FindElements(By.CssSelector(".flatpickr-day:not(.prevMonthDay):not(.nextMonthDay)"))
             .FirstOrDefault(c => c.Text.Trim() == date.Day.ToString()));
         day!.Click();
+        // Let the calendar finish closing so it cannot swallow the next click (e.g. Submit).
+        wait.Until(_ => !IsDatePickerOpen());
         Slowmo.Pause();
 
         var expected = date.ToString("yyyy-MM-dd");
@@ -64,6 +61,32 @@ public sealed class PersonFormPage
         wait.Until(_ => input.GetAttribute("value") == expected);
 
         return this;
+    }
+
+    /// <summary>
+    /// Clicks the date field and returns the calendar once it is showing. In a visible browser
+    /// that is not the focused window, Chrome can drop the focus the click should give the
+    /// field, so the calendar never opens; in that case ask the widget to open directly.
+    /// </summary>
+    private IWebElement OpenDatePicker()
+    {
+        IWebElement? FindOpenCalendar() =>
+            _driver.FindElements(By.CssSelector(".flatpickr-calendar.open")).FirstOrDefault(c => c.Displayed);
+
+        _driver.FindElement(By.Id("DateOfBirth")).Click();
+
+        try
+        {
+            return new WebDriverWait(_driver, TimeSpan.FromSeconds(3)).Until(_ => FindOpenCalendar())!;
+        }
+        catch (WebDriverTimeoutException)
+        {
+            // Fall through and open it directly.
+        }
+
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "document.getElementById('DateOfBirth')._flatpickr.open();");
+        return new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(_ => FindOpenCalendar())!;
     }
 
     /// <summary>True while the calendar widget is open, for asserting the picker really appears.</summary>
